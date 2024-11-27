@@ -20,9 +20,14 @@ Resources:
   TimestreamTestFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: hello-world/
+      CodeUri: timestream-test/
       Handler: app.lambdaHandler
       Runtime: nodejs20.x
+      Environment:
+        Variables:
+          # !Ref is used to reference JUST the parameter value
+          DATABASE_NAME: !Ref DatabaseName
+          TABLE_NAME: !Ref TableName
       Architectures:
       - x86_64
       Events:
@@ -30,6 +35,16 @@ Resources:
           Type: Api 
           Properties:
             Path: /hello
+            Method: get
+        SingleDevice:
+          Type: Api
+          Properties:
+            Path: /devices/{deviceId}/data
+            Method: get
+        MultipleDevices:
+          Type: Api
+          Properties:
+            Path: /devices/data
             Method: get
       Policies:
         - Statement:

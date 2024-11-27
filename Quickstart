@@ -221,7 +221,7 @@ main() {
     # Check for required dependencies
     # check_dependencies
     # validate_and_build || exit 1
-    sam build && sam local invoke
+    sam build && sam local invoke TimestreamTestFunction --event events/event.json
 
     # Run tests based on flags
     if [[ "$run_test_all" == true ]] || [[ "$run_test_unit" == true ]]; then
