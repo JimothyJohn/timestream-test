@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample SAM Template for timestream-test
+
+Globals:
+  Function:
+    Timeout: 30
+    LoggingConfig:
+      LogFormat: JSON
+
+Parameters:
+  DatabaseName:
+    Type: String
+    Description: Name of the Timestream database
+  TableName:
+    Type: String
+    Description: Name of the Timestream table
+
+Resources:
+  TimestreamTestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello-world/
+      Handler: app.lambdaHandler
+      Runtime: nodejs20.x
+      Architectures:
+      - x86_64
+      Events:
+        TimestreamTest:
+          Type: Api 
+          Properties:
+            Path: /hello
+            Method: get
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - timestream:Query
+                - timestream:Select
+              Resource: !Sub arn:aws:timestream:${AWS::Region}:${AWS::AccountId}:database/${DatabaseName}/table/${TableName}
+            - Effect: Allow
+              Action:
+                - timestream:DescribeEndpoints
+              Resource: "*"
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+        - app.ts
+
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+
+Outputs:
+  TimestreamTestApi:
+    Description: API Gateway endpoint URL for Prod stage for Hello World function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  TimestreamTestFunction:
+    Description: Timestream Test Lambda Function ARN
+    Value: !GetAtt TimestreamTestFunction.Arn
+  TimestreamTestFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt TimestreamTestFunctionRole.Arn
